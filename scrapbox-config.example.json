@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "name": "demo-knowledge-base",
+      "exportDataPath": "./data/sample-export.json",
+      "description": "デモ用サンプルプロジェクト（単一ファイル）"
+    },
+    {
+      "name": "demo-split-project",
+      "exportPaths": [
+        "./data/parts-sample/demo-part1.json",
+        "./data/parts-sample/demo-part2.json",
+        "./data/parts-sample/demo-part3.json"
+      ],
+      "description": "デモ用サンプルプロジェクト（分割ファイル）"
+    },
+    {
+      "name": "your-project-name-here",
+      "exportDataPath": "./data/your-export.json",
+      "description": "あなたのScrapboxプロジェクト（単一ファイル用）"
+    },
+    {
+      "name": "your-large-project",
+      "exportPaths": [
+        "./data/parts/your-project-part1.json",
+        "./data/parts/your-project-part2.json",
+        "./data/parts/your-project-part3.json",
+        "./data/parts/your-project-part4.json",
+        "./data/parts/your-project-part5.json"
+      ],
+      "description": "大容量Scrapboxプロジェクト（分割ファイル用）"
+    }
+  ]
+}
