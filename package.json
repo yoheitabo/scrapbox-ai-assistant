@@ -10,7 +10,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "prepare": "lefthook install"
   },
   "keywords": [],
   "author": "",
@@ -18,8 +22,12 @@
   "type": "commonjs",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.0",
+    "axios": "^1.11.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/node": "^24.1.0",
-    "axios": "^1.11.0",
+    "lefthook": "^1.7.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

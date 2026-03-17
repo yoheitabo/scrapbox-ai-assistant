@@ -1,5 +1,5 @@
-import axios, { AxiosInstance } from 'axios';
-import { ScrapboxPage, ScrapboxProject, ScrapboxExportData } from './types.js';
+import axios, { type AxiosInstance } from "axios";
+import type { ScrapboxExportData, ScrapboxPage, ScrapboxProject } from "./types.js";
 
 export class ScrapboxClient {
   private httpClient: AxiosInstance;
@@ -9,13 +9,13 @@ export class ScrapboxClient {
 
   constructor() {
     this.httpClient = axios.create({
-      baseURL: 'https://scrapbox.io',
+      baseURL: "https://scrapbox.io",
       timeout: 10000,
       headers: {
-        'User-Agent': 'ScrapboxMCPServer/1.0.0'
-      }
+        "User-Agent": "ScrapboxMCPServer/1.0.0",
+      },
     });
-    
+
     this.cache = new Map();
     this.cacheExpiry = new Map();
   }
@@ -24,8 +24,8 @@ export class ScrapboxClient {
    * プロジェクトの全ページを取得
    */
   async getProjectPages(projectName: string, limit?: number): Promise<ScrapboxPage[]> {
-    const cacheKey = `pages_${projectName}_${limit || 'all'}`;
-    
+    const cacheKey = `pages_${projectName}_${limit || "all"}`;
+
     if (this.isCacheValid(cacheKey)) {
       return this.cache.get(cacheKey);
     }
@@ -33,13 +33,13 @@ export class ScrapboxClient {
     try {
       const url = `/api/pages/${projectName}`;
       const params = limit ? { limit } : {};
-      
+
       const response = await this.httpClient.get(url, { params });
       const pages = response.data.pages || [];
-      
+
       // 詳細データの取得と変換
       const detailedPages = await Promise.all(
-        pages.map((page: any) => this.enrichPageData(projectName, page))
+        pages.map((page: any) => this.enrichPageData(projectName, page)),
       );
 
       this.setCache(cacheKey, detailedPages);
@@ -55,7 +55,7 @@ export class ScrapboxClient {
    */
   async getPage(projectName: string, pageTitle: string): Promise<ScrapboxPage | null> {
     const cacheKey = `page_${projectName}_${pageTitle}`;
-    
+
     if (this.isCacheValid(cacheKey)) {
       return this.cache.get(cacheKey);
     }
@@ -63,7 +63,7 @@ export class ScrapboxClient {
     try {
       const encodedTitle = encodeURIComponent(pageTitle);
       const response = await this.httpClient.get(`/api/pages/${projectName}/${encodedTitle}`);
-      
+
       if (!response.data) {
         return null;
       }
@@ -103,7 +103,7 @@ export class ScrapboxClient {
   async searchPageTitles(projectName: string, query: string): Promise<string[]> {
     try {
       const response = await this.httpClient.get(`/api/pages/${projectName}/search/titles`, {
-        params: { q: query }
+        params: { q: query },
       });
       return response.data?.titles || [];
     } catch (error) {
@@ -118,7 +118,7 @@ export class ScrapboxClient {
   async searchPages(projectName: string, query: string): Promise<any[]> {
     try {
       const response = await this.httpClient.get(`/api/pages/${projectName}/search/query`, {
-        params: { q: query }
+        params: { q: query },
       });
       return response.data?.pages || [];
     } catch (error) {
@@ -132,33 +132,33 @@ export class ScrapboxClient {
    */
   processMultipleExportFiles(exportPaths: string[], projectName: string): ScrapboxProject {
     console.log(`Loading ${exportPaths.length} export files for project ${projectName}...`);
-    
+
     let mergedPages: ScrapboxPage[] = [];
     let projectData: any = null;
-    
+
     for (let i = 0; i < exportPaths.length; i++) {
       const filePath = exportPaths[i];
       console.log(`Loading part ${i + 1}/${exportPaths.length}: ${filePath}`);
-      
+
       try {
-        const fs = require('fs');
-        const partData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        
+        const fs = require("node:fs");
+        const partData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+
         // 最初のファイルからプロジェクト基本情報を取得
         if (i === 0) {
           projectData = {
             name: partData.name,
             displayName: partData.displayName,
             exported: partData.exported,
-            users: partData.users
+            users: partData.users,
           };
         }
-        
+
         // ページを変換してマージ
         const pages: ScrapboxPage[] = partData.pages.map((pageData: any) => {
           const tags = this.extractTags(pageData.lines);
           const links = this.extractLinks(pageData.lines);
-          
+
           return {
             id: pageData.id,
             title: pageData.title,
@@ -171,38 +171,37 @@ export class ScrapboxClient {
             metadata: {
               wordCount: this.countWords(pageData.lines),
               linkCount: links.length,
-              creativeType: this.detectCreativeType(pageData.lines)
-            }
+              creativeType: this.detectCreativeType(pageData.lines),
+            },
           };
         });
-        
+
         mergedPages = mergedPages.concat(pages);
         console.log(`  Added ${pages.length} pages (total: ${mergedPages.length})`);
-        
       } catch (error) {
         console.error(`Failed to load part ${filePath}:`, error);
         throw new Error(`Failed to load export file part: ${filePath}`);
       }
     }
-    
+
     console.log(`Merged total: ${mergedPages.length} pages`);
-    
+
     // バックリンクの計算
-    console.log('Calculating backlinks...');
+    console.log("Calculating backlinks...");
     this.calculateBacklinks(mergedPages);
-    
+
     // インデックスの構築
-    console.log('Building indexes...');
+    console.log("Building indexes...");
     const tagIndex = this.buildTagIndex(mergedPages);
     const linkGraph = this.buildLinkGraph(mergedPages);
-    
+
     return {
       name: projectName,
       displayName: projectData?.displayName || projectName,
       pages: mergedPages,
       tagIndex,
       linkGraph,
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
     };
   }
 
@@ -211,10 +210,10 @@ export class ScrapboxClient {
    * （ローカルファイルまたはエクスポートされたデータ用）
    */
   processExportData(exportData: ScrapboxExportData, projectName: string): ScrapboxProject {
-    const pages: ScrapboxPage[] = exportData.pages.map(pageData => {
+    const pages: ScrapboxPage[] = exportData.pages.map((pageData) => {
       const tags = this.extractTags(pageData.lines);
       const links = this.extractLinks(pageData.lines);
-      
+
       return {
         id: pageData.id,
         title: pageData.title,
@@ -227,8 +226,8 @@ export class ScrapboxClient {
         metadata: {
           wordCount: this.countWords(pageData.lines),
           linkCount: links.length,
-          creativeType: this.detectCreativeType(pageData.lines)
-        }
+          creativeType: this.detectCreativeType(pageData.lines),
+        },
       };
     });
 
@@ -245,7 +244,7 @@ export class ScrapboxClient {
       pages,
       tagIndex,
       linkGraph,
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
     };
   }
 
@@ -255,7 +254,7 @@ export class ScrapboxClient {
   private async enrichPageData(projectName: string, pageData: any): Promise<ScrapboxPage> {
     const tags = this.extractTags(pageData.lines || []);
     const links = this.extractLinks(pageData.lines || []);
-    
+
     return {
       id: pageData.id || pageData.title,
       title: pageData.title,
@@ -268,8 +267,8 @@ export class ScrapboxClient {
       metadata: {
         wordCount: this.countWords(pageData.lines || []),
         linkCount: links.length,
-        creativeType: this.detectCreativeType(pageData.lines || [])
-      }
+        creativeType: this.detectCreativeType(pageData.lines || []),
+      },
     };
   }
 
@@ -279,14 +278,15 @@ export class ScrapboxClient {
   private extractTags(lines: string[]): string[] {
     const tags = new Set<string>();
     const tagRegex = /#(\S+)/g;
-    
-    lines.forEach(line => {
+
+    for (const line of lines) {
       let match;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
       while ((match = tagRegex.exec(line)) !== null) {
         tags.add(match[1]);
       }
-    });
-    
+    }
+
     return Array.from(tags);
   }
 
@@ -296,14 +296,15 @@ export class ScrapboxClient {
   private extractLinks(lines: string[]): string[] {
     const links = new Set<string>();
     const linkRegex = /\[([^\]]+)\]/g;
-    
-    lines.forEach(line => {
+
+    for (const line of lines) {
       let match;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
       while ((match = linkRegex.exec(line)) !== null) {
         links.add(match[1]);
       }
-    });
-    
+    }
+
     return Array.from(links);
   }
 
@@ -311,21 +312,23 @@ export class ScrapboxClient {
    * 文字数をカウント
    */
   private countWords(lines: string[]): number {
-    return lines.join('\n').length;
+    return lines.join("\n").length;
   }
 
   /**
    * 創作タイプを検出
    */
-  private detectCreativeType(lines: string[]): 'poetry' | 'essay' | 'criticism' | 'note' | 'diary' | undefined {
-    const content = lines.join('\n').toLowerCase();
-    
-    if (content.includes('詩') || content.includes('poem')) return 'poetry';
-    if (content.includes('批評') || content.includes('criticism')) return 'criticism';
-    if (content.includes('エッセイ') || content.includes('essay')) return 'essay';
-    if (content.includes('日記') || content.includes('diary')) return 'diary';
-    
-    return 'note';
+  private detectCreativeType(
+    lines: string[],
+  ): "poetry" | "essay" | "criticism" | "note" | "diary" | undefined {
+    const content = lines.join("\n").toLowerCase();
+
+    if (content.includes("詩") || content.includes("poem")) return "poetry";
+    if (content.includes("批評") || content.includes("criticism")) return "criticism";
+    if (content.includes("エッセイ") || content.includes("essay")) return "essay";
+    if (content.includes("日記") || content.includes("diary")) return "diary";
+
+    return "note";
   }
 
   /**
@@ -333,19 +336,19 @@ export class ScrapboxClient {
    */
   private calculateBacklinks(pages: ScrapboxPage[]): void {
     const titleToBacklinks = new Map<string, string[]>();
-    
-    pages.forEach(page => {
-      page.links.forEach(linkedTitle => {
+
+    for (const page of pages) {
+      for (const linkedTitle of page.links) {
         if (!titleToBacklinks.has(linkedTitle)) {
           titleToBacklinks.set(linkedTitle, []);
         }
-        titleToBacklinks.get(linkedTitle)!.push(page.title);
-      });
-    });
+        titleToBacklinks.get(linkedTitle)?.push(page.title);
+      }
+    }
 
-    pages.forEach(page => {
+    for (const page of pages) {
       page.backlinks = titleToBacklinks.get(page.title) || [];
-    });
+    }
   }
 
   /**
@@ -353,16 +356,16 @@ export class ScrapboxClient {
    */
   private buildTagIndex(pages: ScrapboxPage[]): Map<string, string[]> {
     const tagIndex = new Map<string, string[]>();
-    
-    pages.forEach(page => {
-      page.tags.forEach(tag => {
+
+    for (const page of pages) {
+      for (const tag of page.tags) {
         if (!tagIndex.has(tag)) {
           tagIndex.set(tag, []);
         }
-        tagIndex.get(tag)!.push(page.title);
-      });
-    });
-    
+        tagIndex.get(tag)?.push(page.title);
+      }
+    }
+
     return tagIndex;
   }
 
@@ -371,11 +374,11 @@ export class ScrapboxClient {
    */
   private buildLinkGraph(pages: ScrapboxPage[]): Map<string, string[]> {
     const linkGraph = new Map<string, string[]>();
-    
-    pages.forEach(page => {
+
+    for (const page of pages) {
       linkGraph.set(page.title, [...page.links, ...page.backlinks]);
-    });
-    
+    }
+
     return linkGraph;
   }
 

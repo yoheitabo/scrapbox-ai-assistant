@@ -10,7 +10,7 @@ export interface ScrapboxPage {
   metadata: {
     wordCount: number;
     linkCount: number;
-    creativeType?: 'poetry' | 'essay' | 'criticism' | 'note' | 'diary';
+    creativeType?: "poetry" | "essay" | "criticism" | "note" | "diary";
   };
 }
 
@@ -43,7 +43,7 @@ export interface SearchResult {
 export interface ConnectionAnalysis {
   source: string;
   target: string;
-  connectionType: 'direct_link' | 'tag_similarity' | 'content_similarity';
+  connectionType: "direct_link" | "tag_similarity" | "content_similarity";
   strength: number;
 }
 
